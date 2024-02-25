@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h3>Test Bidirectional communication bewteen https website and LAN application.</h3>
+    <div style="margin: 1em 0;">
+        <span>Target Address: </span>
+        <input id="target-address" type="text" value="ws://127.0.0.1:5092/ws" style="width: 42%;" />
+    </div>
+    <div>
+        <button onclick="startSocket()">Start</button>
+        <button onclick="sendSomeMessage()">Send some message</button>
+        <button onclick="closeSocket()">Close</button>
+    </div>
+    <div id="log">
+    </div>
+</div>
+
+<script>
+    var socket;
+    function startSocket() {
+        try {
+            var targetAddr = document.getElementById('target-address').value
+            socket = new WebSocket(targetAddr)
+        }
+        catch (e) {
+            //console.error(e)
+            appendMsg('Error')
+        }
+        socket.addEventListener("open", function (event) {
+            appendMsg('Connection opened')
+        })
+        socket.addEventListener("message", function (event) {
+            appendMsg('Message from server', event.data)
+        });
+        socket.addEventListener("close", function (event) {
+            appendMsg('Connection closed')
+        })
+        socket.addEventListener("error", (event) => {
+            appendMsg('Error')
+        });
+    }
+
+    function sendSomeMessage() {
+        if (socket.readyState === WebSocket.OPEN) {
+            var toSend = "Message from web page"
+            try {
+                socket.send(toSend);
+            }
+            catch (e) {
+                console.error(e)
+                appendMsg('Error', e)
+            }
+            appendMsg('Sent', toSend)
+        } else {
+            appendMsg('WebSocket is not open. Cannot send message')
+        }
+    }
+
+    function closeSocket() {
+        socket.close()
+    }
+
+    function appendMsg(sys, msg) {
+        var dom = msg ? `<div><span class="log-sys">${sys}: </span><span class="log-msg">${msg}</span></div>` : `<div><span class="log-sys">${sys}</span></div>`;
+        const log = $('#log')
+        log.append(dom)
+        log.scrollTop(log[0].scrollHeight - log.height())
+    }
+</script>
+
+<style type="text/css">
+    #log {
+        text-align: left;
+        height: 20em;
+        overflow: auto;
+    }
+
+        #log .log-sys {
+            color: #bfb2b2;
+        }
+
+        #log .log-msg {
+            color: #5fd3e4;
+        }
+</style>
